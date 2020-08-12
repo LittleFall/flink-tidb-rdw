@@ -8,6 +8,7 @@ import org.apache.flink.table.api.bridge.java.BatchTableEnvironment;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.apache.flink.table.factories.DeserializationFormatFactory;
 import org.apache.flink.table.api.EnvironmentSettings;
+import org.apache.flink.connector.jdbc.internal.JdbcBatchingOutputFormat;
 import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.TableEnvironment;
 import org.apache.flink.table.api.*;
@@ -40,20 +41,21 @@ public class Main {
         );
         tEnv.executeSql("CREATE TABLE print_table WITH ('connector' = 'print')" +
         "LIKE mysql_t (EXCLUDING ALL)");
-//        tEnv.executeSql("CREATE TABLE tidb_t (\n" +
-//                "id int, " +
-//                "val int " +
-//                ") WITH (" +
-//                "   'connector'  = 'jdbc',\n" +
-//                "   'url'        = 'jdbc:mysql://mysql:4000/test',\n" +
-//                "   'table-name' = 't',\n" +
-//                "   'driver'     = 'com.mysql.jdbc.Driver',\n" +
-//                "   'username'   = 'root',\n" +
-//                "   'password'   = ''\n" +
-//                ")"
-//        );
+        tEnv.executeSql("CREATE TABLE tidb_t (\n" +
+                "id int primary key, " +
+                "val int " +
+                ") WITH (" +
+                "   'connector'  = 'jdbc',\n" +
+                "   'url'        = 'jdbc:mysql://127.0.0.1:4000/test',\n" +
+                "   'table-name' = 't',\n" +
+                "   'driver'     = 'com.mysql.cj.jdbc.Driver',\n" +
+                "   'username'   = 'root',\n" +
+                "   'password'   = ''\n" +
+                ")"
+        );
 
-        Table t = tEnv.from("mysql_t");
+        Table t = tEnv.sqlQuery("select * from mysql_t");
+        t.executeInsert("tidb_t");
         t.executeInsert("print_table");
     }
 }
