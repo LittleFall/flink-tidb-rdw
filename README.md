@@ -20,7 +20,7 @@ create table stuff(
 对它们的任何修改都会实时同步到 tidb 中的这张表上：
 ```sql
 create table wide_stuff(
-	stuff_id int not null primary key,
+	stuff_id int primary key,
 	base_id int,
 	base_location varchar(20),
 	stuff_name varchar(20)

@@ -49,7 +49,7 @@ public class Main {
                 "\t'canal-json.ignore-parse-errors'='true'\n" +
                 ")";
         final String DDLCreateWideStuff = "create table wide_stuff(\n" +
-                "\tstuff_id int not null primary key,\n" +
+                "\tstuff_id int primary key,\n" +
                 "\tbase_id int,\n" +
                 "\tbase_location varchar(20),\n" +
                 "\tstuff_name varchar(20)\n" +
