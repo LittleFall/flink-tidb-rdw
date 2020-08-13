@@ -74,7 +74,33 @@ clientPort=2181
 ./kafka/bin/kafka-console-consumer.sh --bootstrap-server 127.0.0.1:9092  --topic example --from-beginning # 查看历史消息
 ./kafka/bin/kafka-console-consumer.sh --bootstrap-server 127.0.0.1:9092  --topic example # 查看新产生的消息
 
-# 用于直接测试
+# 用于调试单条语句
 ./flink/bin/start-cluster.sh
 ./flink/bin/sql-client.sh embedded
 ```
+
+## 测试及结果
+```sql
+insert into base values (1, 'beijing');
+insert into stuff values (1, 1, 'zz');
+-- 6> +I(1,1,beijing,zz)
+insert into stuff values (2, 1, 't');
+-- 6> +I(2,1,beijing,t)
+insert into base values (2, 'shanghai');
+insert into stuff values (3, 2, 'qq');
+-- 6> +I(3,2,shanghai,qq)
+update stuff set stuff_name = 'qz' where stuff_id = 3;
+-- 6> -U(3,2,shanghai,qq)
+-- 6> +U(3,2,shanghai,qz)
+delete from stuff where stuff_name = 't';
+-- 6> -D(2,1,beijing,t)
+
+delete from base;
+-- 6> -D(1,1,beijing,zz)
+-- 6> -D(3,2,shanghai,qz)
+delete from stuff;
+```
+
+## 注意
+所有源表的列名建议各不相同，否则可能会影响解析，将一个 CDC 分配给多张表。
+（已提交 Flink 邮件组）
