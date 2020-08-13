@@ -25,26 +25,28 @@ public class Main {
     public static void main(String[] args) throws Exception {
         final String DDLCreateBase = "create table base ( \n"+
                 "id int primary key, \n"+
-                "location varchar(20) \n"+
+                "location varchar(20) not null \n"+
                 ")WITH ( \n"+
                 "'connector' = 'kafka', \n"+
                 "'topic' = 'example', \n"+
                 "'properties.group.id' = 'testGroup', \n"+
                 "'scan.startup.mode' = 'latest-offset', \n"+
                 "'properties.bootstrap.servers' = 'localhost:9092', \n"+
-                "'format' = 'canal-json' \n"+
+                "'format' = 'canal-json', \n"+
+                "'canal-json.ignore-parse-errors'='true'\n"+
                 ")";
         final String DDLCreateStuff = "create table stuff(\n"+
                 "id int primary key,\n"+
-                "b_id int,\n"+
-                "name varchar(20)\n"+
+                "b_id int not null,\n"+
+                "name varchar(20) not null\n"+
                 ")WITH (\n"+
                 "'connector' = 'kafka',\n"+
                 "'topic' = 'example',\n"+
                 "'properties.group.id' = 'testGroup',\n"+
                 "'scan.startup.mode' = 'latest-offset',\n"+
                 "'properties.bootstrap.servers' = 'localhost:9092',\n"+
-                "'format' = 'canal-json'\n"+
+                "'format' = 'canal-json', \n"+
+                "'canal-json.ignore-parse-errors'='true'\n"+
                 ")";
         final String DDLCreateWideStuff = "create table wide_stuff(\n"+
                 "s_id int primary key,\n"+
@@ -78,13 +80,13 @@ public class Main {
                 "select distinct stuff.id s_id, base.id b_id, base.location, stuff.name\n" +
                 "from stuff inner join base\n" +
                 "on stuff.b_id = base.id\n" +
-                "where location is not null" // TODO: find why must add this condition.
+                "where location is not null"
         );
         t.executeInsert("wide_stuff");
         t.executeInsert("print_wide_stuff");
     }
     /**
-     * 将源表的任何更改打印在屏幕上，原理是创建一个名为 print_source 的表
+     * 将源表的任何更改打印在屏幕上，原理是创建一个名为 print_${source}, sink = print 的表
      * @param tEnv 表环境
      * @param source 表名：必须已经被创建，必须是 source 表
      */
@@ -97,8 +99,9 @@ public class Main {
 
 /*
 测试语句：
-delete from stuff;
+
 delete from base;
+delete from stuff;
 
 insert into base values (1, 'beijing');
 insert into stuff values (1, 1, 'zz');
