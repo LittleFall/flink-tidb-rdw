@@ -122,6 +122,10 @@ public class Sqls {
             case "orders": return TPCC_CreateOrders;
             case "stock": return TPCC_CreateStock;
             case "warehouse": return TPCC_CreateWarehouse;
+
+            case "wide_customer_warehouse": return TPCCWideCustomerWarehouse;
+            case "wide_new_order": return TPCCWideNewOrder;
+            case "wide_order_line_district": return TPCCWideOrderLineDistrict;
         }
         return "";
     }
@@ -130,10 +134,98 @@ public class Sqls {
                 "\t'connector' = 'kafka',\n" +
                 "\t'topic' = 'tpcc-" + tableName + "',\n" +
                 "\t'properties.group.id' = 'testGroup',\n" +
-                "\t'scan.startup.mode' = 'latest-offset',\n" +
+                "\t'scan.startup.mode' = 'earliest-offset',\n" +
                 "\t'properties.bootstrap.servers' = 'localhost:9092',\n" +
                 "\t'format' = 'canal-json',\n" +
                 "\t'canal-json.ignore-parse-errors'='true'\n" +
+                ")";
+    }
+
+    static String TPCCWideCustomerWarehouse = "CREATE TABLE `wide_customer_warehouse`  (\n" +
+            "  `c_id` int NOT NULL,\n" +
+            "  `c_d_id` int NOT NULL,\n" +
+            "  `c_w_id` int NOT NULL,\n" +
+            "  `c_first` varchar(16) NULL,\n" +
+            "  `c_middle` char(2) NULL,\n" +
+            "  `c_last` varchar(16) NULL,\n" +
+            "  `c_street_1` varchar(20) NULL,\n" +
+            "  `c_street_2` varchar(20) NULL,\n" +
+            "  `c_city` varchar(20) NULL,\n" +
+            "  `c_state` char(2) NULL,\n" +
+            "  `c_zip` char(9) NULL,\n" +
+            "  `c_phone` char(16) NULL,\n" +
+            "  `c_since` date NULL,\n" +
+            "  `c_credit` char(2) NULL,\n" +
+            "  `c_credit_lim` decimal(12, 2) NULL,\n" +
+            "  `c_discount` decimal(4, 4) NULL,\n" +
+            "  `c_balance` decimal(12, 2) NULL,\n" +
+            "  `c_ytd_payment` decimal(12, 2) NULL,\n" +
+            "  `c_payment_cnt` int NULL,\n" +
+            "  `c_delivery_cnt` int NULL,\n" +
+            "  `c_data` varchar(500) NULL,\n" +
+            "  `w_name` varchar(10) NULL,\n" +
+            "  `w_street_1` varchar(20) NULL,\n" +
+            "  `w_street_2` varchar(20) NULL,\n" +
+            "  `w_city` varchar(20) NULL,\n" +
+            "  `w_state` char(2) NULL,\n" +
+            "  `w_zip` char(9) NULL,\n" +
+            "  `w_tax` decimal(4, 4) NULL,\n" +
+            "  `w_ytd` decimal(12, 2) NULL,\n" +
+            "  PRIMARY KEY (`c_w_id`, `c_d_id`, `c_id`) NOT ENFORCED\n" +
+            ")";
+    static String TPCCWideNewOrder = "CREATE TABLE `wide_new_order`  (\n" +
+            "  `no_o_id` int NOT NULL,\n" +
+            "  `no_d_id` int NOT NULL,\n" +
+            "  `no_w_id` int NOT NULL,\n" +
+            "  `d_name` varchar(10) NULL,\n" +
+            "  `d_street_1` varchar(20) NULL,\n" +
+            "  `d_street_2` varchar(20) NULL,\n" +
+            "  `d_city` varchar(20) NULL,\n" +
+            "  `d_state` char(2) NULL,\n" +
+            "  `d_zip` char(9) NULL,\n" +
+            "  `d_tax` decimal(4, 4) NULL,\n" +
+            "  `d_ytd` decimal(12, 2) NULL,\n" +
+            "  `d_next_o_id` int NULL,\n" +
+            "  `w_name` varchar(10) NULL,\n" +
+            "  `w_street_1` varchar(20) NULL,\n" +
+            "  `w_street_2` varchar(20) NULL,\n" +
+            "  `w_city` varchar(20) NULL,\n" +
+            "  `w_state` char(2) NULL,\n" +
+            "  `w_zip` char(9) NULL,\n" +
+            "  `w_tax` decimal(4, 4) NULL,\n" +
+            "  `w_ytd` decimal(12, 2) NULL,\n" +
+            "  PRIMARY KEY (`no_o_id`) NOT ENFORCED\n" +
+            ")";
+    static String TPCCWideOrderLineDistrict = "CREATE TABLE `wide_order_line_district`  (\n" +
+            "  `ol_o_id` int NOT NULL,\n" +
+            "  `ol_d_id` int NOT NULL,\n" +
+            "  `ol_w_id` int NOT NULL,\n" +
+            "  `ol_number` int NOT NULL,\n" +
+            "  `ol_i_id` int NOT NULL,\n" +
+            "  `ol_supply_w_id` int NULL,\n" +
+            "  `ol_delivery_d` date NULL,\n" +
+            "  `ol_quantity` int NULL,\n" +
+            "  `ol_amount` decimal(6, 2) NULL,\n" +
+            "  `ol_dist_info` char(24) NULL,\n" +
+            "  `d_name` varchar(10) NULL,\n" +
+            "  `d_street_1` varchar(20) NULL,\n" +
+            "  `d_street_2` varchar(20) NULL,\n" +
+            "  `d_city` varchar(20) NULL,\n" +
+            "  `d_state` char(2) NULL,\n" +
+            "  `d_zip` char(9) NULL,\n" +
+            "  `d_tax` decimal(4, 4) NULL,\n" +
+            "  `d_ytd` decimal(12, 2) NULL,\n" +
+            "  `d_next_o_id` int NULL,\n" +
+            "  PRIMARY KEY (`ol_w_id`, `ol_d_id`, `ol_o_id`, `ol_number`) NOT ENFORCED\n" +
+            ")";
+    static String getTPCCSinkWith(String tableName) {
+        return " WITH (\n" +
+                "\t'connector'  = 'jdbc',\n" +
+                "\t'url'        = 'jdbc:mysql://127.0.0.1:4000/tpcc',\n" +
+                "\t'table-name' = '"+tableName+"',\n" +
+                "\t'driver'     = 'com.mysql.cj.jdbc.Driver',\n" +
+                "\t'username'   = 'root',\n" +
+                "\t'password'   = ''\n" +
                 ")";
     }
 }

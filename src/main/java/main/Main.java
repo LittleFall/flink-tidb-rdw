@@ -33,12 +33,47 @@ public class Main {
                 EnvironmentSettings.newInstance().useBlinkPlanner().inStreamingMode().build()
         );
 
-        String[] tpccTableNames = {"customer", "district", "history", "item", "new_order", "order_line", "orders", "stock", "warehouse"};
-        for(String tableName: tpccTableNames) {
-//            System.out.println(createTPCCTable(tableName) + getTPCCSourceWith(tableName));
+        String[] tpccSourceTableNames = {"customer", "district", "history", "item", "new_order", "order_line", "orders", "stock", "warehouse"};
+        for(String tableName: tpccSourceTableNames) {
+            //System.out.println(createTPCCTable(tableName) + getTPCCSourceWith(tableName));
             tEnv.executeSql(createTPCCTable(tableName) + getTPCCSourceWith(tableName));
-            printSource(tEnv, tableName);
+            //printSource(tEnv, tableName);
         }
+
+        String[] tpccSinkTableNames = {"wide_customer_warehouse", "wide_new_order", "wide_order_line_district"};
+        for(String tableName: tpccSinkTableNames) {
+            //System.out.println(createTPCCTable(tableName) + getTPCCSinkWith(tableName));
+            tEnv.executeSql(createTPCCTable(tableName) + getTPCCSinkWith(tableName));
+        }
+
+        tEnv.sqlQuery(
+                "select ol_o_id, ol_d_id, ol_w_id, ol_number, ol_i_id, ol_supply_w_id," +
+                        " ol_delivery_d, ol_quantity, ol_amount, ol_dist_info, d_name," +
+                        " d_street_1, d_street_2, d_city, d_state, d_zip, d_tax, d_ytd, d_next_o_id " +
+                "from order_line left join district " +
+                "on order_line.ol_d_id = district.d_id " +
+                "and order_line.ol_w_id = district.d_w_id"
+        ).executeInsert("wide_order_line_district");
+
+        tEnv.sqlQuery(
+                "select no_o_id, no_d_id, no_w_id, d_name, d_street_1, d_street_2, d_city, " +
+                "d_state, d_zip, d_tax, d_ytd, d_next_o_id, w_name, w_street_1, " +
+                "w_street_2, w_city, w_state, w_zip, w_tax, w_ytd " +
+                        "from new_order left join district " +
+                        "on new_order.no_d_id = district.d_id " +
+                        "and new_order.no_w_id = district.d_w_id " +
+                "left join warehouse " +
+                "on new_order.no_w_id = warehouse.w_id"
+        ).executeInsert("wide_new_order");
+
+        tEnv.sqlQuery(
+                "select c_id, c_d_id, c_w_id, c_first, c_middle, c_last, c_street_1, c_street_2," +
+                        " c_city, c_state, c_zip, c_phone, c_since, c_credit, c_credit_lim," +
+                        " c_discount, c_balance, c_ytd_payment, c_payment_cnt, c_delivery_cnt," +
+                        " c_data, w_name, w_street_1, w_street_2, w_city, w_state, w_zip, w_tax, w_ytd " +
+                "from customer left join warehouse " +
+                "on customer.c_w_id=warehouse.w_id"
+        ).executeInsert("wide_customer_warehouse");
     }
 
     /**
