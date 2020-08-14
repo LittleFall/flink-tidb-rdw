@@ -28,7 +28,7 @@ public class Main {
                 "\tbase_location varchar(20)\n" +
                 ") WITH (\n" +
                 "\t'connector' = 'kafka',\n" +
-                "\t'topic' = 'example',\n" +
+                "\t'topic' = 'test-base',\n" +
                 "\t'properties.group.id' = 'testGroup',\n" +
                 "\t'scan.startup.mode' = 'latest-offset',\n" +
                 "\t'properties.bootstrap.servers' = 'localhost:9092',\n" +
@@ -41,7 +41,7 @@ public class Main {
                 "\tstuff_name varchar(20)\n" +
                 ") WITH (\n" +
                 "\t'connector' = 'kafka',\n" +
-                "\t'topic' = 'example',\n" +
+                "\t'topic' = 'test-stuff',\n" +
                 "\t'properties.group.id' = 'testGroup',\n" +
                 "\t'scan.startup.mode' = 'latest-offset',\n" +
                 "\t'properties.bootstrap.servers' = 'localhost:9092',\n" +
@@ -71,8 +71,8 @@ public class Main {
         tEnv.executeSql(DDLCreateStuff);
         tEnv.executeSql(DDLCreateWideStuff);
 
-//        printSource(tEnv, "base");
-//        printSource(tEnv, "stuff");
+        printSource(tEnv, "base");
+        printSource(tEnv, "stuff");
 
         tEnv.executeSql("CREATE TABLE print_wide_stuff WITH ('connector' = 'print') LIKE wide_stuff (EXCLUDING ALL)");
         Table t = tEnv.sqlQuery(
@@ -84,15 +84,15 @@ public class Main {
         t.executeInsert("print_wide_stuff");
     }
 
-//    /**
-//     * 将源表的任何更改打印在屏幕上，原理是创建一个名为 print_${source}, sink = print 的表
-//     * @param tEnv 表环境
-//     * @param source 表名：必须已经被创建，必须是 source 表
-//     */
-//    static void printSource(StreamTableEnvironment tEnv, String source) {
-//        tEnv.executeSql("CREATE TABLE print_" + source + " WITH ('connector' = 'print') LIKE " + source + " (EXCLUDING ALL)");
-//        tEnv.from(source).executeInsert("print_" + source);
-//    }
+    /**
+     * 将源表的任何更改打印在屏幕上，原理是创建一个名为 print_${source}, sink = print 的表
+     * @param tEnv 表环境
+     * @param source 表名：必须已经被创建，必须是 source 表
+     */
+    static void printSource(StreamTableEnvironment tEnv, String source) {
+        tEnv.executeSql("CREATE TABLE print_" + source + " WITH ('connector' = 'print') LIKE " + source + " (EXCLUDING ALL)");
+        tEnv.from(source).executeInsert("print_" + source);
+    }
 }
 
 
