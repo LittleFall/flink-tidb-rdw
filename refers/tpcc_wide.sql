@@ -1,3 +1,4 @@
+CREATE DATABASE tpcc;
 CREATE TABLE `tpcc`.`wide_customer_warehouse`  (
   `c_id` int(11) NOT NULL,
   `c_d_id` int(11) NOT NULL,
@@ -28,9 +29,9 @@ CREATE TABLE `tpcc`.`wide_customer_warehouse`  (
   `w_zip` char(9) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL DEFAULT NULL,
   `w_tax` decimal(4, 4) NULL DEFAULT NULL,
   `w_ytd` decimal(12, 2) NULL DEFAULT NULL,
-  PRIMARY KEY (`c_w_id`, `c_d_id`, `c_id`) USING BTREE,
-  INDEX `idx_customer`(`c_w_id`, `c_d_id`, `c_last`, `c_first`) USING BTREE
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_bin ROW_FORMAT = Compact;
+  PRIMARY KEY (`c_w_id`, `c_d_id`, `c_id`),
+  INDEX `idx_customer`(`c_w_id`, `c_d_id`, `c_last`, `c_first`)
+) CHARACTER SET = utf8mb4 COLLATE = utf8mb4_bin ROW_FORMAT = Compact;
 
 
 CREATE TABLE `tpcc`.`wide_new_order`  (
@@ -54,8 +55,8 @@ CREATE TABLE `tpcc`.`wide_new_order`  (
   `w_zip` char(9) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL DEFAULT NULL,
   `w_tax` decimal(4, 4) NULL DEFAULT NULL,
   `w_ytd` decimal(12, 2) NULL DEFAULT NULL,
-  PRIMARY KEY (`no_o_id`) USING BTREE
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_bin ROW_FORMAT = Compact;
+  PRIMARY KEY (`no_o_id`)
+) CHARACTER SET = utf8mb4 COLLATE = utf8mb4_bin ROW_FORMAT = Compact;
 
 CREATE TABLE `tpcc`.`wide_order_line_district`  (
   `ol_o_id` int(11) NOT NULL,
@@ -78,5 +79,5 @@ CREATE TABLE `tpcc`.`wide_order_line_district`  (
   `d_ytd` decimal(12, 2) NULL DEFAULT NULL,
   `d_next_o_id` int(11) NULL DEFAULT NULL,
 
-  PRIMARY KEY (`ol_w_id`, `ol_d_id`, `ol_o_id`, `ol_number`) USING BTREE
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_bin ROW_FORMAT = Compact;
+  PRIMARY KEY (`ol_w_id`, `ol_d_id`, `ol_o_id`, `ol_number`)
+) CHARACTER SET = utf8mb4 COLLATE = utf8mb4_bin ROW_FORMAT = Compact;
