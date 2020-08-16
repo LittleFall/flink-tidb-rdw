@@ -1,4 +1,5 @@
-CREATE DATABASE tpcc;
+DROP DATABASE IF EXISTS tpcc;
+CREATE DATABASE tpcc; 
 CREATE TABLE `tpcc`.`wide_customer_warehouse`  (
   `c_id` int(11) NOT NULL,
   `c_d_id` int(11) NOT NULL,
