@@ -134,7 +134,7 @@ public class Sqls {
                 "\t'connector' = 'kafka',\n" +
                 "\t'topic' = 'tpcc-" + tableName + "',\n" +
                 "\t'properties.group.id' = 'testGroup',\n" +
-                "\t'scan.startup.mode' = 'earliest-offset',\n" +
+                "\t'scan.startup.mode' = 'latest-offset',\n" +
                 "\t'properties.bootstrap.servers' = 'localhost:9092',\n" +
                 "\t'format' = 'canal-json',\n" +
                 "\t'canal-json.ignore-parse-errors'='true'\n" +

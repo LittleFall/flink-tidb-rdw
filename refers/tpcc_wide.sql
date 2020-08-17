@@ -1,3 +1,19 @@
+-- test
+
+DROP DATABASE IF EXISTS test;
+CREATE DATABASE test; 
+USE test;
+
+create table wide_stuff(
+  stuff_id int primary key,
+  base_id int,
+  base_location varchar(20),
+  stuff_name varchar(20)
+);
+
+
+-- tpcc
+
 DROP DATABASE IF EXISTS tpcc;
 CREATE DATABASE tpcc; 
 CREATE TABLE `tpcc`.`wide_customer_warehouse`  (

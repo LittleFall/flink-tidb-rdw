@@ -33,6 +33,67 @@ public class Main {
                 EnvironmentSettings.newInstance().useBlinkPlanner().inStreamingMode().build()
         );
 
+        test(tEnv);
+        tpcc(tEnv);
+    }
+    static void test(StreamTableEnvironment tEnv) {
+        final String DDLCreateBase = "create table base (\n" +
+                "\tbase_id int primary key,\n" +
+                "\tbase_location varchar(20)\n" +
+                ") WITH (\n" +
+                "\t'connector' = 'kafka',\n" +
+                "\t'topic' = 'test-base',\n" +
+                "\t'properties.group.id' = 'testGroup',\n" +
+                "\t'scan.startup.mode' = 'latest-offset',\n" +
+                "\t'properties.bootstrap.servers' = 'localhost:9092',\n" +
+                "\t'format' = 'canal-json',\n" +
+                "\t'canal-json.ignore-parse-errors'='true'\n" +
+                ")";
+        final String DDLCreateStuff = "create table stuff(\n" +
+                "\tstuff_id int primary key,\n" +
+                "\tstuff_base_id int,\n" +
+                "\tstuff_name varchar(20)\n" +
+                ") WITH (\n" +
+                "\t'connector' = 'kafka',\n" +
+                "\t'topic' = 'test-stuff',\n" +
+                "\t'properties.group.id' = 'testGroup',\n" +
+                "\t'scan.startup.mode' = 'latest-offset',\n" +
+                "\t'properties.bootstrap.servers' = 'localhost:9092',\n" +
+                "\t'format' = 'canal-json',\n" +
+                "\t'canal-json.ignore-parse-errors'='true'\n" +
+                ")";
+        final String DDLCreateWideStuff = "create table wide_stuff(\n" +
+                "\tstuff_id int primary key,\n" +
+                "\tbase_id int,\n" +
+                "\tbase_location varchar(20),\n" +
+                "\tstuff_name varchar(20)\n" +
+                ") WITH (\n" +
+                "\t'connector'  = 'jdbc',\n" +
+                "\t'url'        = 'jdbc:mysql://127.0.0.1:4000/test',\n" +
+                "\t'table-name' = 'wide_stuff',\n" +
+                "\t'driver'     = 'com.mysql.cj.jdbc.Driver',\n" +
+                "\t'username'   = 'root',\n" +
+                "\t'password'   = ''\n" +
+                ")";
+
+        tEnv.executeSql(DDLCreateBase);
+        tEnv.executeSql(DDLCreateStuff);
+        tEnv.executeSql(DDLCreateWideStuff);
+
+        printSource(tEnv, "base");
+        printSource(tEnv, "stuff");
+
+        tEnv.executeSql("CREATE TABLE print_wide_stuff WITH ('connector' = 'print') LIKE wide_stuff (EXCLUDING ALL)");
+        Table t = tEnv.sqlQuery(
+                "select stuff.stuff_id, base.base_id, base.base_location, stuff.stuff_name\n" +
+                        "from stuff inner join base\n" +
+                        "on stuff.stuff_base_id = base.base_id"
+        );
+        t.executeInsert("wide_stuff");
+        t.executeInsert("print_wide_stuff");
+    }
+
+    static void tpcc(StreamTableEnvironment tEnv) {
         String[] tpccSourceTableNames = {"customer", "district", "history", "item", "new_order", "order_line", "orders", "stock", "warehouse"};
         for(String tableName: tpccSourceTableNames) {
             //System.out.println(createTPCCTable(tableName) + getTPCCSourceWith(tableName));

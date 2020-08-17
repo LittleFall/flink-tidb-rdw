@@ -1,18 +1,21 @@
-/*
- Navicat Premium Data Transfer
+-- test
 
- Source Server         : dev.masshandler.com_4000
- Source Server Type    : MySQL
- Source Server Version : 50725
- Source Host           : dev.masshandler.com:4000
- Source Schema         : test
+DROP DATABASE IF EXISTS test;
+CREATE DATABASE test; 
+USE test;
 
- Target Server Type    : MySQL
- Target Server Version : 50725
- File Encoding         : 65001
+create table base (
+  base_id int primary key,
+  base_location varchar(20)
+);
+create table stuff(
+  stuff_id int primary key,
+  stuff_base_id int,
+  stuff_name varchar(20)
+);
 
- Date: 14/08/2020 15:47:32
-*/
+
+-- tpcc
 
 DROP DATABASE IF EXISTS tpcc;
 CREATE DATABASE tpcc; 
