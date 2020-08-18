@@ -20,14 +20,21 @@ find ./config/canal-config -name "h2.mv.db"|xargs rm -f
 
 # Start the environment
 docker-compose up -d
+
+while [ 0 -eq 0 ]
+do
+    docker-compose run tidb-initialize mysql -h tidb -u root -P 4000 -e 'source /initsql/tidb-init.sql'
+    if [ $? -eq 0 ]; then
+        break;
+    else
+        sleep 2
+    fi
+done
+
 docker-compose exec jobmanager ./bin/flink run /opt/tasks/flink-tidb-rdw.jar --source_host kafka --dest_host tidb
-
-# If you failed to create wide tables in TiDB, please retry this.
-docker-compose run tidb-initialize mysql -htidb -uroot -P4000 -e'source /initsql/tidb-init.sql'
-
 # Prepare and run workload
-docker-compose run go-tpc tpcc prepare -Hmysql -P3306 -Uroot -pexample --warehouses 4 -Dtpcc
-docker-compose run go-tpc tpcc run -Hmysql -P3306 -Uroot -pexample --warehouses 4 -Dtpcc
+docker-compose run go-tpc tpcc prepare -H mysql -P 3306 -U root -p example --warehouses 4 -D tpcc
+docker-compose run go-tpc tpcc run -H mysql -P 3306 -U root -p example --warehouses 4 -D tpcc
 ```
 
 ## TODO
