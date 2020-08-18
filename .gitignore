@@ -9,7 +9,7 @@
 # macOS
 .DS_Store
 
-# Canal logs
-/docker/canal-server-logs
+# logs
+/logs
 *.db
 *.dat
