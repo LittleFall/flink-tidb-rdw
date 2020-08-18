@@ -135,7 +135,7 @@ public class Sqls {
                 "\t'topic' = 'tpcc-" + tableName + "',\n" +
                 "\t'properties.group.id' = 'testGroup',\n" +
                 "\t'scan.startup.mode' = 'latest-offset',\n" +
-                "\t'properties.bootstrap.servers' = 'localhost:9092',\n" +
+                "\t'properties.bootstrap.servers' = 'kafka:9092',\n" +
                 "\t'format' = 'canal-json',\n" +
                 "\t'canal-json.ignore-parse-errors'='true'\n" +
                 ")";
@@ -218,10 +218,10 @@ public class Sqls {
             "  `d_next_o_id` int NULL,\n" +
             "  PRIMARY KEY (`ol_w_id`, `ol_d_id`, `ol_o_id`, `ol_number`) NOT ENFORCED\n" +
             ")";
-    static String getTPCCSinkWith(String tableName) {
+    static String getTPCCSinkWith(String tableName,String destination_host) {
         return " WITH (\n" +
                 "\t'connector'  = 'jdbc',\n" +
-                "\t'url'        = 'jdbc:mysql://127.0.0.1:4000/tpcc',\n" +
+                "\t'url'        = 'jdbc:mysql://"+destination_host+":4000/tpcc',\n" +
                 "\t'table-name' = '"+tableName+"',\n" +
                 "\t'driver'     = 'com.mysql.cj.jdbc.Driver',\n" +
                 "\t'username'   = 'root',\n" +
