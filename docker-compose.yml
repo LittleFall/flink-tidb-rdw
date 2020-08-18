@@ -55,8 +55,8 @@ services:
     ports:
       - "11111:11111"
     volumes:
-      - ./canal-server-logs/:/home/admin/canal-server/logs/
-      - ./canal-config/:/home/admin/canal-server/conf/
+      - ./docker/canal-server-logs/:/home/admin/canal-server/logs/
+      - ./docker/canal-config/:/home/admin/canal-server/conf/
     depends_on:
       - db
 
@@ -70,14 +70,14 @@ services:
       MYSQL_ROOT_PASSWORD: example
       MYSQL_DATABASE: tpcc
     volumes:
-      - ./mysql:/docker-entrypoint-initdb.d
+      - ./docker/mysql:/docker-entrypoint-initdb.d
 
   pd:
     image: pingcap/pd:latest
     ports:
       - "2379"
     volumes:
-      - ./tidb-config/pd.toml:/pd.toml:ro
+      - ./docker/tidb-config/pd.toml:/pd.toml:ro
     command:
       - --name=pd
       - --client-urls=http://0.0.0.0:2379
@@ -93,7 +93,7 @@ services:
   tikv:
     image: pingcap/tikv:latest
     volumes:
-      - ./tidb-config/tikv.toml:/tikv.toml:ro
+      - ./docker/tidb-config/tikv.toml:/tikv.toml:ro
     command:
       - --addr=0.0.0.0:20160
       - --advertise-addr=tikv:20160
@@ -111,7 +111,7 @@ services:
       - "4000:4000"
       - "10080:10080"
     volumes:
-      - ./tidb-config/tidb.toml:/tidb.toml:ro
+      - ./docker/tidb-config/tidb.toml:/tidb.toml:ro
     command:
       - --store=tikv
       - --path=pd:2379
@@ -125,7 +125,7 @@ services:
   tidb-initialize:
     image: mysql
     volumes:
-      - ./tidb-config/init.sql:/initsql/tidb-init.sql
+      - ./docker/tidb-config/init.sql:/initsql/tidb-init.sql
 
   go-tpc:
     image: registry.cn-beijing.aliyuncs.com/handlerww/go-tpc:latest

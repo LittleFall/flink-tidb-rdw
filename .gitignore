@@ -1,5 +1,6 @@
 # IntelliJ IDEA Project
 /.idea
+*.iml
 
 # Maven Build
 /target
