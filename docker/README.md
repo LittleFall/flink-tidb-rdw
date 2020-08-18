@@ -20,7 +20,7 @@ find ./canal-config -name "h2.mv.db"|xargs rm -f
 
 # Start the environment
 docker-compose up -d
-docker-compose exec jobmanager ./bin/flink run /opt/tasks/flink-tidb-rdw.jar --dest_host db
+docker-compose exec jobmanager ./bin/flink run /opt/tasks/flink-tidb-rdw.jar --dest_host tidb
 
 # If you failed to create wide tables in TiDB, please retry this.
 docker-compose run tidb-initialize mysql -h tidb -u root -P 4000 -e 'source /initsql/tidb-init.sql'
