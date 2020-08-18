@@ -30,7 +30,7 @@ services:
       - |
         FLINK_PROPERTIES=
         jobmanager.rpc.address: jobmanager
-        taskmanager.numberOfTaskSlots: 6
+        taskmanager.numberOfTaskSlots: 128
 
   kafka:
     image: wurstmeister/kafka:2.12-2.2.1
