@@ -1,4 +1,4 @@
-version: '2.1'
+version: '3.8'
 services:
   jobmanager:
     image: flink:1.11.0-scala_2.11
@@ -12,6 +12,7 @@ services:
     command: jobmanager
     environment:
       - JOB_MANAGER_RPC_ADDRESS=jobmanager
+      
   taskmanager:
     image: flink:1.11.0-scala_2.11
     volumes:
@@ -62,6 +63,59 @@ services:
       - 3306:3306
     environment:
       MYSQL_ROOT_PASSWORD: example
-      MYSQL_DATABASE: flink-test
+      MYSQL_DATABASE: tpcc
     volumes:
       - ./mysql:/docker-entrypoint-initdb.d
+  pd:
+    image: pingcap/pd:latest
+    ports:
+      - "2379"
+    volumes:
+      - ./tidb-config/pd.toml:/pd.toml:ro
+    command:
+      - --name=pd
+      - --client-urls=http://0.0.0.0:2379
+      - --peer-urls=http://0.0.0.0:2380
+      - --advertise-client-urls=http://pd:2379
+      - --advertise-peer-urls=http://pd:2380
+      - --initial-cluster=pd=http://pd:2380
+      - --data-dir=/data/pd
+      - --config=/pd.toml
+      - --log-file=/logs/pd.log
+    restart: on-failure
+  tikv:
+    image: pingcap/tikv:latest
+    volumes:
+      - ./tidb-config/tikv.toml:/tikv.toml:ro
+    command:
+      - --addr=0.0.0.0:20160
+      - --advertise-addr=tikv:20160
+      - --data-dir=/data/tikv
+      - --pd=pd:2379
+      - --config=/tikv.toml
+      - --log-file=/logs/tikv.log
+    depends_on:
+      - "pd"
+    restart: on-failure
+  tidb:
+    image: pingcap/tidb:latest
+    ports:
+      - "4000:4000"
+      - "10080:10080"
+    volumes:
+      - ./tidb-config/tidb.toml:/tidb.toml:ro
+    command:
+      - --store=tikv
+      - --path=pd:2379
+      - --config=/tidb.toml
+      - --log-file=/logs/tidb.log
+      - --advertise-address=tidb
+    depends_on:
+      - "tikv"
+    restart: on-failure
+  tidb-initialize:
+    image: mysql
+    volumes:
+      - ./tidb-config/init.sql:/initsql/tidb-init.sql
+  go-tpc:
+    image: registry.cn-beijing.aliyuncs.com/handlerww/go-tpc:latest
