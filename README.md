@@ -13,21 +13,21 @@ git clone https://github.com/LittleFall/flink-tidb-rdw && cd ./flink-tidb-rdw/do
 
 # Clean the existed environment
 docker-compose down
-rm -rf canal-server-logs/*
-find ./canal-config -name "meta.dat"|xargs rm -f
-find ./canal-config -name "h2.trace.db"|xargs rm -f
-find ./canal-config -name "h2.mv.db"|xargs rm -f
+rm -rf ./docker/canal-server-logs/
+find ./docker/canal-config -name "meta.dat"|xargs rm -f
+find ./docker/canal-config -name "h2.trace.db"|xargs rm -f
+find ./docker/canal-config -name "h2.mv.db"|xargs rm -f
 
 # Start the environment
 docker-compose up -d
-docker-compose exec jobmanager ./bin/flink run /opt/tasks/flink-tidb-rdw.jar --dest_host tidb
+docker-compose exec jobmanager ./bin/flink run /opt/tasks/flink-tidb-rdw.jar --source_host kafka --dest_host tidb
 
 # If you failed to create wide tables in TiDB, please retry this.
-docker-compose run tidb-initialize mysql -h tidb -u root -P 4000 -e 'source /initsql/tidb-init.sql'
+docker-compose run tidb-initialize mysql -htidb -uroot -P4000 -e'source /initsql/tidb-init.sql'
 
 # Prepare and run workload
-docker-compose run go-tpc tpcc prepare -H db -P 3306 -U root -p example --warehouses 4 -D tpcc
-docker-compose run go-tpc tpcc run -H db -P 3306 -U root -p example --warehouses 4 -D tpcc
+docker-compose run go-tpc tpcc prepare -Hdb -P3306 -Uroot -pexample --warehouses 4 -Dtpcc
+docker-compose run go-tpc tpcc run -Hdb -P3306 -Uroot -pexample --warehouses 4 -Dtpcc
 ```
 
 ## TODO

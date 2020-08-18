@@ -17,15 +17,16 @@ public class Main {
 
         ParameterTool parameter = ParameterTool.fromArgs(args);
         String destination_host = parameter.get("dest_host", "127.0.0.1");
+        String source_host = parameter.get("source_host", "127.0.0.1");
 
-        test(tEnv, destination_host);
-        tpcc(tEnv, destination_host);
+        test(tEnv, source_host, destination_host);
+        tpcc(tEnv, source_host, destination_host);
     }
-    static void test(StreamTableEnvironment tEnv, String destination_host) {
+    static void test(StreamTableEnvironment tEnv, String source_host, String destination_host) {
         tEnv.executeSql(getCreateTableSql("base") +
-                getSourceWith("kafka", "test", "base"));
+                getSourceWith(source_host, "test", "base"));
         tEnv.executeSql(getCreateTableSql("stuff") +
-                getSourceWith("kafka", "test", "stuff"));
+                getSourceWith(source_host, "test", "stuff"));
         tEnv.executeSql(getCreateTableSql("wide_stuff") +
                 getSinkWith(destination_host, "test", "stuff"));
 
@@ -42,11 +43,11 @@ public class Main {
         t.executeInsert("print_wide_stuff");
     }
 
-    static void tpcc(StreamTableEnvironment tEnv, String destination_host) {
+    static void tpcc(StreamTableEnvironment tEnv, String source_host, String destination_host) {
         String[] tpccSourceTableNames = {"customer", "district", "history", "item", "new_order", "order_line", "orders", "stock", "warehouse"};
         for(String tableName: tpccSourceTableNames) {
             tEnv.executeSql(getCreateTableSql(tableName) +
-                    getSourceWith("kafka", "tpcc", tableName));
+                    getSourceWith(source_host, "tpcc", tableName));
             //printSource(tEnv, tableName);
         }
 

@@ -1,6 +1,67 @@
 package main;
 
 public class Sqls {
+    static String getCreateTableSql(String tableName) {
+        switch (tableName) {
+            case "customer": return TPCC_CreateCustomer;
+            case "district": return TPCC_CreateDistrict;
+            case "history": return TPCC_CreateHistory;
+            case "item": return TPCC_CreateItem;
+            case "new_order": return TPCC_CreateNewOrder;
+            case "order_line": return TPCC_CreateOrderLine;
+            case "orders": return TPCC_CreateOrders;
+            case "stock": return TPCC_CreateStock;
+            case "warehouse": return TPCC_CreateWarehouse;
+
+            case "wide_customer_warehouse": return TPCCWideCustomerWarehouse;
+            case "wide_new_order": return TPCCWideNewOrder;
+            case "wide_order_line_district": return TPCCWideOrderLineDistrict;
+
+            case "base": return testCreateBase;
+            case "stuff": return testCreateStuff;
+            case "wide_stuff": return testCreateWideStuff;
+
+        }
+        return "";
+    }
+    static String getSourceWith(String host, String database, String table) {
+        return " WITH (\n" +
+                "\t'connector' = 'kafka',\n" +
+                "\t'topic' = '"+database+"-"+table+"',\n" +
+                "\t'properties.group.id' = 'testGroup',\n" +
+                "\t'scan.startup.mode' = 'latest-offset',\n" +
+                "\t'properties.bootstrap.servers' = '"+host+":9092',\n" +
+                "\t'format' = 'canal-json',\n" +
+                "\t'canal-json.ignore-parse-errors'='true'\n" +
+                ")";
+    }
+    static String getSinkWith(String host, String database, String table) {
+        return " WITH (\n" +
+                "\t'connector'  = 'jdbc',\n" +
+                "\t'url'        = 'jdbc:mysql://"+host+":4000/"+database+"',\n" +
+                "\t'table-name' = '"+table+"',\n" +
+                "\t'driver'     = 'com.mysql.cj.jdbc.Driver',\n" +
+                "\t'username'   = 'root',\n" +
+                "\t'password'   = ''\n" +
+                ")";
+    }
+
+    static String testCreateBase = "create table base (\n" +
+                "\tbase_id int primary key,\n" +
+                "\tbase_location varchar(20)\n" +
+                ")";
+    static String testCreateStuff = "create table stuff(\n" +
+                "\tstuff_id int primary key,\n" +
+                "\tstuff_base_id int,\n" +
+                "\tstuff_name varchar(20)\n" +
+                ")";
+    static String testCreateWideStuff = "create table wide_stuff(\n" +
+                "\tstuff_id int primary key,\n" +
+                "\tbase_id int,\n" +
+                "\tbase_location varchar(20),\n" +
+                "\tstuff_name varchar(20)\n" +
+                ")";
+
     static String TPCC_CreateCustomer = "CREATE TABLE `customer`  (\n" +
             "  `c_id` int NOT NULL,\n" +
             "  `c_d_id` int NOT NULL,\n" +
@@ -111,36 +172,6 @@ public class Sqls {
             "  `w_tax` decimal(4, 4) NULL,\n" +
             "  `w_ytd` decimal(12, 2) NULL\n" +
             ")";
-    static String createTPCCTable(String tableName) {
-        switch (tableName) {
-            case "customer": return TPCC_CreateCustomer;
-            case "district": return TPCC_CreateDistrict;
-            case "history": return TPCC_CreateHistory;
-            case "item": return TPCC_CreateItem;
-            case "new_order": return TPCC_CreateNewOrder;
-            case "order_line": return TPCC_CreateOrderLine;
-            case "orders": return TPCC_CreateOrders;
-            case "stock": return TPCC_CreateStock;
-            case "warehouse": return TPCC_CreateWarehouse;
-
-            case "wide_customer_warehouse": return TPCCWideCustomerWarehouse;
-            case "wide_new_order": return TPCCWideNewOrder;
-            case "wide_order_line_district": return TPCCWideOrderLineDistrict;
-        }
-        return "";
-    }
-    static String getTPCCSourceWith(String tableName) {
-        return " WITH (\n" +
-                "\t'connector' = 'kafka',\n" +
-                "\t'topic' = 'tpcc-" + tableName + "',\n" +
-                "\t'properties.group.id' = 'testGroup',\n" +
-                "\t'scan.startup.mode' = 'latest-offset',\n" +
-                "\t'properties.bootstrap.servers' = 'kafka:9092',\n" +
-                "\t'format' = 'canal-json',\n" +
-                "\t'canal-json.ignore-parse-errors'='true'\n" +
-                ")";
-    }
-
     static String TPCCWideCustomerWarehouse = "CREATE TABLE `wide_customer_warehouse`  (\n" +
             "  `c_id` int NOT NULL,\n" +
             "  `c_d_id` int NOT NULL,\n" +
@@ -218,14 +249,4 @@ public class Sqls {
             "  `d_next_o_id` int NULL,\n" +
             "  PRIMARY KEY (`ol_w_id`, `ol_d_id`, `ol_o_id`, `ol_number`) NOT ENFORCED\n" +
             ")";
-    static String getTPCCSinkWith(String tableName,String destination_host) {
-        return " WITH (\n" +
-                "\t'connector'  = 'jdbc',\n" +
-                "\t'url'        = 'jdbc:mysql://"+destination_host+":4000/tpcc',\n" +
-                "\t'table-name' = '"+tableName+"',\n" +
-                "\t'driver'     = 'com.mysql.cj.jdbc.Driver',\n" +
-                "\t'username'   = 'root',\n" +
-                "\t'password'   = ''\n" +
-                ")";
-    }
 }
