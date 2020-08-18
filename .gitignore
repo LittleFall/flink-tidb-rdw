@@ -1,0 +1,9 @@
+# IntelliJ IDEA Project
+/.idea
+
+# Maven Build
+/target
+!/target/flink-tidb-rdw.jar
+
+# macOS
+.DS_Store
