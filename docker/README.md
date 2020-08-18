@@ -32,4 +32,4 @@ docker-compose run go-tpc tpcc run -H db -P 3306 -U root -p example --warehouses
 
 ## TODO
 
-- [ ] Deal with the source and the destination informations in Job files.
+- [ ] implement the project on Kubernestes
