@@ -1,0 +1,15 @@
+# IntelliJ IDEA Project
+/.idea
+*.iml
+
+# Maven Build
+/target
+!/target/flink-tidb-rdw.jar
+
+# macOS
+.DS_Store
+
+# logs
+/logs
+*.db
+*.dat

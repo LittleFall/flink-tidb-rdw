@@ -1,84 +1,34 @@
 package main;
 
-import org.apache.flink.api.common.functions.MapFunction;
-import org.apache.flink.api.java.DataSet;
-import org.apache.flink.api.java.ExecutionEnvironment;
-import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer;
-import org.apache.flink.table.api.bridge.java.BatchTableEnvironment;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
-import org.apache.flink.table.factories.DeserializationFormatFactory;
 import org.apache.flink.table.api.EnvironmentSettings;
-import org.apache.flink.connector.jdbc.internal.JdbcBatchingOutputFormat;
 import org.apache.flink.table.api.Table;
-import org.apache.flink.table.api.TableEnvironment;
-import org.apache.flink.table.api.*;
-//import org.apache.flink.table.api.java;
-import org.apache.flink.types.Row;
-
-import static main.Sqls.getTPCCSourceWith;
-import static org.apache.flink.table.api.Expressions.*;
-
-import java.util.Date;
-import java.util.Properties;
-
+import org.apache.flink.api.java.utils.ParameterTool;
 import static main.Sqls.*;
 
 public class Main {
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) {
         StreamTableEnvironment tEnv = StreamTableEnvironment.create(
                 StreamExecutionEnvironment.getExecutionEnvironment(),
                 EnvironmentSettings.newInstance().useBlinkPlanner().inStreamingMode().build()
         );
 
-        test(tEnv);
-        tpcc(tEnv);
-    }
-    static void test(StreamTableEnvironment tEnv) {
-        final String DDLCreateBase = "create table base (\n" +
-                "\tbase_id int primary key,\n" +
-                "\tbase_location varchar(20)\n" +
-                ") WITH (\n" +
-                "\t'connector' = 'kafka',\n" +
-                "\t'topic' = 'test-base',\n" +
-                "\t'properties.group.id' = 'testGroup',\n" +
-                "\t'scan.startup.mode' = 'latest-offset',\n" +
-                "\t'properties.bootstrap.servers' = 'localhost:9092',\n" +
-                "\t'format' = 'canal-json',\n" +
-                "\t'canal-json.ignore-parse-errors'='true'\n" +
-                ")";
-        final String DDLCreateStuff = "create table stuff(\n" +
-                "\tstuff_id int primary key,\n" +
-                "\tstuff_base_id int,\n" +
-                "\tstuff_name varchar(20)\n" +
-                ") WITH (\n" +
-                "\t'connector' = 'kafka',\n" +
-                "\t'topic' = 'test-stuff',\n" +
-                "\t'properties.group.id' = 'testGroup',\n" +
-                "\t'scan.startup.mode' = 'latest-offset',\n" +
-                "\t'properties.bootstrap.servers' = 'localhost:9092',\n" +
-                "\t'format' = 'canal-json',\n" +
-                "\t'canal-json.ignore-parse-errors'='true'\n" +
-                ")";
-        final String DDLCreateWideStuff = "create table wide_stuff(\n" +
-                "\tstuff_id int primary key,\n" +
-                "\tbase_id int,\n" +
-                "\tbase_location varchar(20),\n" +
-                "\tstuff_name varchar(20)\n" +
-                ") WITH (\n" +
-                "\t'connector'  = 'jdbc',\n" +
-                "\t'url'        = 'jdbc:mysql://127.0.0.1:4000/test',\n" +
-                "\t'table-name' = 'wide_stuff',\n" +
-                "\t'driver'     = 'com.mysql.cj.jdbc.Driver',\n" +
-                "\t'username'   = 'root',\n" +
-                "\t'password'   = ''\n" +
-                ")";
+        ParameterTool parameter = ParameterTool.fromArgs(args);
+        String destination_host = parameter.get("dest_host", "127.0.0.1");
+        String source_host = parameter.get("source_host", "127.0.0.1");
 
-        tEnv.executeSql(DDLCreateBase);
-        tEnv.executeSql(DDLCreateStuff);
-        tEnv.executeSql(DDLCreateWideStuff);
+        test(tEnv, source_host, destination_host);
+        tpcc(tEnv, source_host, destination_host);
+    }
+    static void test(StreamTableEnvironment tEnv, String source_host, String destination_host) {
+        tEnv.executeSql(getCreateTableSql("base") +
+                getSourceWith(source_host, "test", "base"));
+        tEnv.executeSql(getCreateTableSql("stuff") +
+                getSourceWith(source_host, "test", "stuff"));
+        tEnv.executeSql(getCreateTableSql("wide_stuff") +
+                getSinkWith(destination_host, "test", "stuff"));
 
         printSource(tEnv, "base");
         printSource(tEnv, "stuff");
@@ -93,18 +43,18 @@ public class Main {
         t.executeInsert("print_wide_stuff");
     }
 
-    static void tpcc(StreamTableEnvironment tEnv) {
+    static void tpcc(StreamTableEnvironment tEnv, String source_host, String destination_host) {
         String[] tpccSourceTableNames = {"customer", "district", "history", "item", "new_order", "order_line", "orders", "stock", "warehouse"};
         for(String tableName: tpccSourceTableNames) {
-            //System.out.println(createTPCCTable(tableName) + getTPCCSourceWith(tableName));
-            tEnv.executeSql(createTPCCTable(tableName) + getTPCCSourceWith(tableName));
+            tEnv.executeSql(getCreateTableSql(tableName) +
+                    getSourceWith(source_host, "tpcc", tableName));
             //printSource(tEnv, tableName);
         }
 
         String[] tpccSinkTableNames = {"wide_customer_warehouse", "wide_new_order", "wide_order_line_district"};
         for(String tableName: tpccSinkTableNames) {
-            //System.out.println(createTPCCTable(tableName) + getTPCCSinkWith(tableName));
-            tEnv.executeSql(createTPCCTable(tableName) + getTPCCSinkWith(tableName));
+            tEnv.executeSql(getCreateTableSql(tableName) +
+                    getSinkWith(destination_host, "tpcc", tableName));
         }
 
         tEnv.sqlQuery(
