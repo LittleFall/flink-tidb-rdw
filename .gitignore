@@ -8,3 +8,8 @@
 
 # macOS
 .DS_Store
+
+# Canal logs
+/docker/canal-server-logs
+*.db
+*.dat
