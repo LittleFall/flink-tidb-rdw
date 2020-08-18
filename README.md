@@ -19,8 +19,12 @@ find ./config/canal-config -name "h2.trace.db"|xargs rm -f
 find ./config/canal-config -name "h2.mv.db"|xargs rm -f
 
 # Start the environment
+
 docker-compose up -d
 
+# You can see information and the running job in Flink dashboard: http://localhost:8081/
+
+# Import table structure to tidb.
 while [ 0 -eq 0 ]
 do
     docker-compose run tidb-initialize mysql -h tidb -u root -P 4000 -e 'source /initsql/tidb-init.sql'
