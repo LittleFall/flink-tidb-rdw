@@ -19,8 +19,8 @@ public class Main {
         String destination_host = parameter.get("dest_host", "127.0.0.1");
         String source_host = parameter.get("source_host", "127.0.0.1");
 
-        test(tEnv, source_host, destination_host);
-        //tpcc(tEnv, source_host, destination_host);
+        //test(tEnv, source_host, destination_host);
+        tpcc(tEnv, source_host, destination_host);
     }
     static void test(StreamTableEnvironment tEnv, String source_host, String destination_host) {
         tEnv.executeSql(getCreateTableSql("base") +
