@@ -37,8 +37,8 @@ done
 
 docker-compose exec jobmanager ./bin/flink run /opt/tasks/flink-tidb-rdw.jar --source_host kafka --dest_host tidb
 # Prepare and run workload
-docker-compose run go-tpc tpcc prepare -H mysql -P 3306 -U root -p example --warehouses 4 -D tpcc
-docker-compose run go-tpc tpcc run -H mysql -P 3306 -U root -p example --warehouses 4 -D tpcc
+docker-compose run go-tpc tpcc prepare -H db -P 3306 -U root -p example --warehouses 4 -D tpcc
+docker-compose run go-tpc tpcc run -H db -P 3306 -U root -p example --warehouses 4 -D tpcc
 ```
 
 ## TODO
