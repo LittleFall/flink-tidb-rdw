@@ -20,7 +20,7 @@ public class Main {
         String source_host = parameter.get("source_host", "127.0.0.1");
 
         test(tEnv, source_host, destination_host);
-        tpcc(tEnv, source_host, destination_host);
+        //tpcc(tEnv, source_host, destination_host);
     }
     static void test(StreamTableEnvironment tEnv, String source_host, String destination_host) {
         tEnv.executeSql(getCreateTableSql("base") +
@@ -28,7 +28,7 @@ public class Main {
         tEnv.executeSql(getCreateTableSql("stuff") +
                 getSourceWith(source_host, "test", "stuff"));
         tEnv.executeSql(getCreateTableSql("wide_stuff") +
-                getSinkWith(destination_host, "test", "stuff"));
+                getSinkWith(destination_host, "test", "wide_stuff"));
 
         printSource(tEnv, "base");
         printSource(tEnv, "stuff");
