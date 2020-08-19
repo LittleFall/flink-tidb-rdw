@@ -42,6 +42,7 @@ services:
       HOSTNAME_COMMAND: "route -n | awk '/UG[ \t]/{print $$2}'"
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
     volumes:
+      - ./logs/kafka/:/kafka/
       - /var/run/docker.sock:/var/run/docker.sock
 
   zookeeper:
@@ -59,6 +60,7 @@ services:
       - ./config/canal-config/:/home/admin/canal-server/conf/
     depends_on:
       - db
+      - zookeeper
 
   db:
     image: mysql
