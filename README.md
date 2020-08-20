@@ -50,7 +50,7 @@ mysql -h127.0.0.1 -P3307 -uroot -pexample -Dtest -e"delete from stuff"
 mysql -h127.0.0.1 -P4000 -uroot -Dtest -e"select * from wide_stuff" 
 
 docker-compose exec kafka /opt/kafka/bin/kafka-topics.sh --list --zookeeper zookeeper:2181
-docker-compose exec kafka /opt/kafka/bin/kafka-console-consumer.sh --bootstrap-server kafka:9092 --topic test-base --from-begining
+docker-compose exec kafka /opt/kafka/bin/kafka-console-consumer.sh --bootstrap-server kafka:9092 --topic test-base --from-beginning
 ```
 
 ## TODO
