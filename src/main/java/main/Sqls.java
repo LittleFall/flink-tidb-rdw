@@ -38,7 +38,7 @@ public class Sqls {
     static String getSinkWith(String host, String database, String table) {
         return " WITH (\n" +
                 "\t'connector'  = 'jdbc',\n" +
-                "\t'url'        = 'jdbc:mysql://"+host+":4000/"+database+"?rewritebatchedstatements=true',\n" +
+                "\t'url'        = 'jdbc:mysql://"+host+":4000/"+database+"?rewriteBatchedStatements=true',\n" +
                 "\t'table-name' = '"+table+"',\n" +
                 "\t'driver'     = 'com.mysql.cj.jdbc.Driver',\n" +
                 "\t'username'   = 'root',\n" +
