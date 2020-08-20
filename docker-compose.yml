@@ -135,3 +135,28 @@ services:
 
   go-tpc:
     image: registry.cn-beijing.aliyuncs.com/handlerww/go-tpc:latest
+
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    hostname: prometheus
+    restart: always
+    volumes:
+        - ./config/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+        - "9090:9090"
+            
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    hostname: grafana
+    restart: always
+    environment:
+      GF_LOG_LEVEL: error
+      GF_PATHS_PROVISIONING: /etc/grafana/provisioning
+      GF_PATHS_CONFIG: /etc/grafana/grafana.ini
+    volumes:
+      - ./config/grafana:/etc/grafana
+      - ./config/grafana-dashboard:/tmp/dashboards
+    ports:
+        - "3000:3000"
