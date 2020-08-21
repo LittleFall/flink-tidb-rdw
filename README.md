@@ -12,7 +12,7 @@ Clone this repository, switch to the directory, execute the command below.
 git clone https://github.com/LittleFall/flink-tidb-rdw && cd ./flink-tidb-rdw/
 
 # Stop the environment
-docker-compose down
+docker-compose down -v
 rm -rf ./logs
 find ./config/canal-config -name "meta.dat"|xargs rm -f
 find ./config/canal-config -name "h2.trace.db"|xargs rm -f
