@@ -23,21 +23,21 @@ public class Main {
         tpcc(tEnv, source_host, destination_host);
     }
     static void test(StreamTableEnvironment tEnv, String source_host, String destination_host) {
-        tEnv.executeSql(getCreateTableSql("base") +
-                getSourceWith(source_host, "test", "base"));
-        tEnv.executeSql(getCreateTableSql("stuff") +
-                getSourceWith(source_host, "test", "stuff"));
-        tEnv.executeSql(getCreateTableSql("wide_stuff") +
-                getSinkWith(destination_host, "test", "wide_stuff"));
+        tEnv.executeSql(getDDL("base") + KafkaSource(source_host, "test", "base"));
+        tEnv.executeSql(getDDL("stuff") + KafkaSource(source_host, "test", "stuff"));
+        tEnv.executeSql(getDDL("wide_stuff") + JDBCSink(destination_host, "test", "wide_stuff"));
 
         printSource(tEnv, "base");
         printSource(tEnv, "stuff");
+        tEnv.executeSql(getDDL("print_wide_stuff", "wide_stuff") + PrintSink());
 
-        tEnv.executeSql("CREATE TABLE print_wide_stuff WITH ('connector' = 'print') LIKE wide_stuff (EXCLUDING ALL)");
+        tEnv.executeSql("insert into print_base select * from base");
+        tEnv.executeSql("insert into print_stuff select * from stuff");
+
         Table t = tEnv.sqlQuery(
                 "select stuff.stuff_id, base.base_id, base.base_location, stuff.stuff_name\n" +
-                        "from stuff inner join base\n" +
-                        "on stuff.stuff_base_id = base.base_id"
+                "from stuff inner join base\n" +
+                "on stuff.stuff_base_id = base.base_id"
         );
         t.executeInsert("wide_stuff");
         t.executeInsert("print_wide_stuff");
@@ -46,15 +46,12 @@ public class Main {
     static void tpcc(StreamTableEnvironment tEnv, String source_host, String destination_host) {
         String[] tpccSourceTableNames = {"customer", "district", "history", "item", "new_order", "order_line", "orders", "stock", "warehouse"};
         for(String tableName: tpccSourceTableNames) {
-            tEnv.executeSql(getCreateTableSql(tableName) +
-                    getSourceWith(source_host, "tpcc", tableName));
-            //printSource(tEnv, tableName);
+            tEnv.executeSql(getDDL(tableName) + KafkaSource(source_host, "tpcc", tableName));
         }
 
         String[] tpccSinkTableNames = {"wide_customer_warehouse", "wide_new_order", "wide_order_line_district"};
         for(String tableName: tpccSinkTableNames) {
-            tEnv.executeSql(getCreateTableSql(tableName) +
-                    getSinkWith(destination_host, "tpcc", tableName));
+            tEnv.executeSql(getDDL(tableName) + JDBCSink(destination_host, "tpcc", tableName));
         }
 
         tEnv.sqlQuery(
