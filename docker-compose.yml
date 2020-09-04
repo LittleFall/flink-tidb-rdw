@@ -1,11 +1,11 @@
-version: '3.8'
+version: '3.3'
 services:
 
   jobmanager:
     image: flink:1.11.1-scala_2.12
     volumes:
-      - ./target:/opt/tasks
       - ./logs/jobmanager/:/opt/flink/log/
+      - ./config/flink-jars/:/opt/flink/connector-lib/
     hostname: "jobmanager"
     expose:
       - "6123"
@@ -18,7 +18,6 @@ services:
   taskmanager:
     image: flink:1.11.1-scala_2.12
     volumes:
-      - ./target:/opt/tasks
       - ./logs/taskmanager/:/opt/flink/log/
     expose:
       - "6121"
@@ -61,22 +60,21 @@ services:
       - ./logs/canal-server-logs/:/home/admin/canal-server/logs/
       - ./config/canal-config/:/home/admin/canal-server/conf/
     depends_on:
-      - db
+      - mysql-server
       - zookeeper
 
-  db:
+  mysql-server:
     image: mysql
     command: --default-authentication-plugin=mysql_native_password
     restart: always
     ports:
       - 3307:3306
     environment:
-      MYSQL_ROOT_PASSWORD: example
-      MYSQL_DATABASE: tpcc
-    security_opt:
-      - seccomp:unconfined
+      MYSQL_ALLOW_EMPTY_PASSWORD: 'yes'
     volumes:
       - ./config/mysql:/docker-entrypoint-initdb.d
+    security_opt:
+      - seccomp:unconfined
 
   pd:
     image: pingcap/pd:latest
@@ -127,38 +125,3 @@ services:
     depends_on:
       - "tikv"
     restart: on-failure
-
-  tidb-initialize:
-    image: mysql
-    volumes:
-      - ./config/tidb-config/init.sql:/initsql/tidb-init.sql
-      - ./config/tidb-config/tidb-init.sh:/initsql/tidb-init.sh
-
-
-  go-tpc:
-    image: registry.cn-beijing.aliyuncs.com/handlerww/go-tpc:latest
-
-  prometheus:
-    image: prom/prometheus
-    container_name: prometheus
-    hostname: prometheus
-    restart: always
-    volumes:
-        - ./config/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
-    ports:
-        - "9090:9090"
-            
-  grafana:
-    image: grafana/grafana
-    container_name: grafana
-    hostname: grafana
-    restart: always
-    environment:
-      GF_LOG_LEVEL: error
-      GF_PATHS_PROVISIONING: /etc/grafana/provisioning
-      GF_PATHS_CONFIG: /etc/grafana/grafana.ini
-    volumes:
-      - ./config/grafana:/etc/grafana
-      - ./config/grafana-dashboard:/tmp/dashboards
-    ports:
-        - "3000:3000"

@@ -1,60 +1,118 @@
-# TiDB with Flink in RDW
+# TiDB Flink 实时数仓
 
-## Usage
+## 使用方法
 
-Clone this repository, switch to the directory, execute the command below.
+1. 拉起 docker-compose 集群
 
 ```bash
-# If you have not installed the docker, you could run these commands
-# curl -fsSL https://get.docker.com | bash -s docker --mirror Aliyun
-# pip3 install docker-compose
-
 git clone https://github.com/LittleFall/flink-tidb-rdw && cd ./flink-tidb-rdw/
 
-# Stop the environment
-docker-compose down -v
-rm -rf ./logs
-find ./config/canal-config -name "meta.dat"|xargs rm -f
-find ./config/canal-config -name "h2.trace.db"|xargs rm -f
-find ./config/canal-config -name "h2.mv.db"|xargs rm -f
-
-# Start the environment
 docker-compose up -d
-
-# You can see information and the running job in Flink dashboard: http://localhost:8081/
-
-# Import table structure to tidb.
-docker-compose run tidb-initialize bash /initsql/tidb-init.sh
-
-docker-compose exec jobmanager ./bin/flink run /opt/tasks/flink-tidb-rdw.jar --source_host kafka --dest_host tidb
-# Prepare and run workload
-docker-compose run go-tpc tpcc prepare -Hdb -P3306 -Uroot -pexample --warehouses 4 -D tpcc
-docker-compose run go-tpc tpcc run -Hdb -P3306 -Uroot -pexample --warehouses 4 -D tpcc
 ```
 
-To watch the workload, there is a cheetsheat for you:
+2. 通过 Flink SQL Client 编写作业
 
 ```bash
-# watch tidb
-watch -n 1 "mysql -h 127.0.0.1 -P 4000 -e 'select count(*) from  tpcc.wide_order_line_district'"
-# watch resources
-docker stats
+docker-compose exec jobmanager ./bin/sql-client.sh embedded -l ./connector-lib
 ```
 
-Test commands:
+注册 Flink 表
+
+```sql
+create table base (
+    base_id int primary key,
+    base_location varchar(20)
+) WITH (
+    'connector' = 'kafka',
+    'properties.bootstrap.servers' = 'kafka:9092',
+    'properties.group.id' = 'test',
+    'topic' = 'test-base',
+    'scan.startup.mode' = 'latest-offset',
+    'format' = 'canal-json',
+    'canal-json.ignore-parse-errors'='true'
+);
+
+
+create table stuff(
+    stuff_id int primary key,
+    stuff_base_id int,
+    stuff_name varchar(20)
+) WITH (
+    'connector' = 'kafka',
+    'properties.bootstrap.servers' = 'kafka:9092',
+    'properties.group.id' = 'test',
+    'topic' = 'test-stuff',
+    'scan.startup.mode' = 'latest-offset',
+    'format' = 'canal-json',
+    'canal-json.ignore-parse-errors'='true'
+); 
+
+create table wide_stuff(
+    stuff_id int primary key,
+    base_id int,
+    base_location varchar(20),
+    stuff_name varchar(20)
+) WITH (
+	'connector'  = 'jdbc',
+    'driver'     = 'com.mysql.cj.jdbc.Driver',
+    'url'        = 'jdbc:mysql://tidb:4000/test?rewriteBatchedStatements=true',
+    'table-name' = 'wide_stuff',
+    'username'   = 'root',
+    'password'   = ''
+);
+
+create table print_base LIKE base WITH ('connector' = 'print');
+
+create table print_stuff LIKE stuff WITH ('connector' = 'print');
+
+create table print_wide_stuff LIKE wide_stuff WITH ('connector' = 'print');
+```
+
+提交作业到 Flink 集群
+
+```sql
+insert into wide_stuff
+select stuff.stuff_id, base.base_id, base.base_location, stuff.stuff_name
+from stuff inner join base
+on stuff.stuff_base_id = base.base_id;
+
+insert into print_base select * from base;
+
+insert into print_stuff select * from stuff;
+
+insert into print_wide_stuff
+select stuff.stuff_id, base.base_id, base.base_location, stuff.stuff_name
+from stuff inner join base
+on stuff.stuff_base_id = base.base_id;
+```
+
+在提交完成后，可以通过 localhost:8081 查看任务执行情况。
+
+3. 在目标数据库 TiDB 中创建结果表
 
 ```bash
-mysql -h127.0.0.1 -P3307 -uroot -pexample -Dtest -e"insert into base values (1, 'beijing')" 
-mysql -h127.0.0.1 -P3307 -uroot -pexample -Dtest -e"insert into stuff values (1, 1, 'zz')" 
-mysql -h127.0.0.1 -P4000 -uroot -Dtest -e"select * from wide_stuff" 
-mysql -h127.0.0.1 -P3307 -uroot -pexample -Dtest -e"delete from base"
-mysql -h127.0.0.1 -P3307 -uroot -pexample -Dtest -e"delete from stuff"
-mysql -h127.0.0.1 -P4000 -uroot -Dtest -e"select * from wide_stuff" 
-
-docker-compose exec kafka /opt/kafka/bin/kafka-topics.sh --list --zookeeper zookeeper:2181
-docker-compose exec kafka /opt/kafka/bin/kafka-console-consumer.sh --bootstrap-server kafka:9092 --topic test-base --from-beginning
+docker-compose exec db mysql -htidb -uroot -P4000
 ```
 
-## TODO
+```sql
+create table wide_stuff(
+    stuff_id int primary key,
+    base_id int,
+    base_location varchar(20),
+    stuff_name varchar(20)
+);
+```
 
-- [ ] implement the project on Kubernestes for production
+4. 在 MySQL 中导入数据，进行测试
+
+```bash
+insert into base values (1, 'bj');
+insert into stuff values (1, 1, 'zz');
+insert into stuff values (2, 1, 'tmp');
+insert into base values (2, 'sh');
+insert into stuff values (3, 2, 'qq');
+update stuff set stuff_name = 'qz' where stuff_id = 3;
+delete from stuff where stuff_name = 'tmp';
+```
+
+## 解释
