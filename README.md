@@ -7,6 +7,7 @@
 ```bash
 # 克隆项目
 git clone https://github.com/LittleFall/flink-tidb-rdw && cd ./flink-tidb-rdw/
+git checkout pure-sql
 
 # 重置环境
 docker-compose down -v
