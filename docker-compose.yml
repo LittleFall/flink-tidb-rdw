@@ -134,6 +134,11 @@ services:
       - ./config/tidb-config/init.sql:/initsql/tidb-init.sql
       - ./config/tidb-config/tidb-init.sh:/initsql/tidb-init.sh
 
+  pushgateway:
+    image: prom/pushgateway:v0.3.1
+    command:
+      - --log.level=error
+    restart: on-failure
 
   go-tpc:
     image: registry.cn-beijing.aliyuncs.com/handlerww/go-tpc:latest
@@ -145,6 +150,9 @@ services:
     restart: always
     volumes:
         - ./config/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+        - ./config/prometheus/pd.rules.yml:/etc/prometheus/pd.rules.yml:ro
+        - ./config/prometheus/tikv.rules.yml:/etc/prometheus/tikv.rules.yml:ro
+        - ./config/prometheus/tidb.rules.yml:/etc/prometheus/tidb.rules.yml:ro
     ports:
         - "9090:9090"
             
