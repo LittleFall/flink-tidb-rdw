@@ -168,7 +168,7 @@ docker-compose exec mysql-server mysql -htidb -uroot -P4000 -e"select * from tes
 ## 注意点
 
 1. Flink 需要内存较大，请将 docker-compose 集群可用的内存调大，建议 6G 及以上。
-2. Flink SQL Client 设计为交互式执行，目前不支持同时执行多条语句，一个可用的替代方案是 apache zeppelin。
+2. Flink SQL Client 设计为交互式执行，目前不支持一次输入多条语句，一个可用的替代方案是 apache zeppelin。
 
 
 TODO: 增加一些例子，比如 mysql 中异步读取维表、使用 flink 进行数据异构。
