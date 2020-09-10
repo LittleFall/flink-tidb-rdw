@@ -10,9 +10,7 @@ git clone https://github.com/LittleFall/flink-tidb-rdw && cd ./flink-tidb-rdw/
 git checkout pure-sql
 
 # 重置环境
-docker-compose down -v
-rm -rf ./logs
-find ./config/canal-config -name "meta.dat"|xargs rm -f
+docker-compose down -v && rm -rf ./logs && find ./config/canal-config -name "meta.dat"|xargs rm -f
 
 # 启动集群
 docker-compose up -d
@@ -36,7 +34,7 @@ create table base (
     'connector' = 'kafka',
     'properties.bootstrap.servers' = 'kafka:9092',
     'properties.group.id' = 'test',
-    'topic' = 'test-base',
+    'topic' = 'test.base',
     'scan.startup.mode' = 'latest-offset',
     'format' = 'canal-json',
     'canal-json.ignore-parse-errors'='true'
@@ -51,7 +49,7 @@ create table stuff(
     'connector' = 'kafka',
     'properties.bootstrap.servers' = 'kafka:9092',
     'properties.group.id' = 'test',
-    'topic' = 'test-stuff',
+    'topic' = 'test.stuff',
     'scan.startup.mode' = 'latest-offset',
     'format' = 'canal-json',
     'canal-json.ignore-parse-errors'='true'
@@ -169,6 +167,18 @@ docker-compose exec mysql-server mysql -htidb -uroot -P4000 -e"select * from tes
 
 1. Flink 需要内存较大，请将 docker-compose 集群可用的内存调大，建议 6G 及以上。
 2. Flink SQL Client 设计为交互式执行，目前不支持同时执行多条语句，一个可用的替代方案是 apache zeppelin。
+3. 可以使用如下命令测试 Kafka 是否接收到了数据
 
+```bash
+docker-compose exec mysql-server mysql -uroot -e"insert into test.base values (1, 'bj')";
+docker-compose exec kafka /opt/kafka/bin/kafka-topics.sh --list --zookeeper zookeeper:2181  
+docker-compose exec kafka /opt/kafka/bin/kafka-console-consumer.sh --bootstrap-server kafka:9092 --topic test.base --from-beginning
+
+docker-compose down -v && rm -rf ./logs && find ./config/canal-config -name "meta.dat"|xargs rm -f && docker-compose up -d
+
+```
 
 TODO: 增加一些例子，比如 mysql 中异步读取维表、使用 flink 进行数据异构。
+
+./kafka/bin/kafka-topics.sh --list --zookeeper 127.0.0.1:2181  
+./kafka/bin/kafka-console-consumer.sh --bootstrap-server 127.0.0.1:9092 --topic test.base --from-beginning
