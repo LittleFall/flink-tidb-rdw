@@ -10,7 +10,7 @@ git clone https://github.com/LittleFall/flink-tidb-rdw && cd ./flink-tidb-rdw/
 git checkout pure-sql
 
 # 重置环境
-docker-compose down -v && rm -rf ./logs && find ./config/canal-config -name "meta.dat"|xargs rm -f
+docker-compose down -v 
 
 # 启动集群
 docker-compose up -d
@@ -31,13 +31,13 @@ create table base (
     base_id int primary key,
     base_location varchar(20)
 ) WITH (
-    'connector' = 'kafka',
-    'properties.bootstrap.servers' = 'kafka:9092',
-    'properties.group.id' = 'test',
-    'topic' = 'test.base',
-    'scan.startup.mode' = 'latest-offset',
-    'format' = 'canal-json',
-    'canal-json.ignore-parse-errors'='true'
+    'connector' = 'mysql-cdc',
+    'hostname' = 'mysql-server',
+    'port' = '3306',
+    'username' = 'root',
+    'password' = '',
+    'database-name' = 'test',
+    'table-name' = 'base'
 );
 
 
@@ -46,13 +46,13 @@ create table stuff(
     stuff_base_id int,
     stuff_name varchar(20)
 ) WITH (
-    'connector' = 'kafka',
-    'properties.bootstrap.servers' = 'kafka:9092',
-    'properties.group.id' = 'test',
-    'topic' = 'test.stuff',
-    'scan.startup.mode' = 'latest-offset',
-    'format' = 'canal-json',
-    'canal-json.ignore-parse-errors'='true'
+    'connector' = 'mysql-cdc',
+    'hostname' = 'mysql-server',
+    'port' = '3306',
+    'username' = 'root',
+    'password' = '',
+    'database-name' = 'test',
+    'table-name' = 'stuff'
 ); 
 
 create table wide_stuff(
@@ -175,15 +175,6 @@ docker-compose exec kafka /opt/kafka/bin/kafka-topics.sh --list --zookeeper zook
 docker-compose exec kafka /opt/kafka/bin/kafka-console-consumer.sh --bootstrap-server kafka:9092 --topic test.base --from-beginning
 
 docker-compose down -v && rm -rf ./logs && find ./config/canal-config -name "meta.dat"|xargs rm -f && docker-compose up -d
-
 ```
 
 TODO: 增加一些例子，比如 mysql 中异步读取维表、使用 flink 进行数据异构。
-
-./kafka/bin/kafka-topics.sh --list --zookeeper 127.0.0.1:2181  
-./kafka/bin/kafka-console-consumer.sh --bootstrap-server 127.0.0.1:9092 --topic test.base --from-beginning
-
-## 案例
-
-### 1. 单表数据同步
-
