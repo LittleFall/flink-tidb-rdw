@@ -33,35 +33,10 @@ services:
         jobmanager.rpc.address: jobmanager
         taskmanager.numberOfTaskSlots: 8
 
-  kafka:
-    image: wurstmeister/kafka:2.12-2.2.1
-    ports:
-      - "9092:9092"
-    depends_on:
-      - zookeeper
-    environment:
-      HOSTNAME_COMMAND: "route -n | awk '/UG[ \t]/{print $$2}'"
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-    volumes:
-      - ./logs/kafka/:/kafka/
-      - /var/run/docker.sock:/var/run/docker.sock
-
-  zookeeper:
-    image: wurstmeister/zookeeper:3.4.6
-    ports:
-      - "2181:2181"
-
-  canal-server:
-    image: canal/canal-server:v1.1.4
-    container_name: canal-server
-    ports:
-      - "11111:11111"
-    volumes:
-      - ./logs/canal-server-logs/:/home/admin/canal-server/logs/
-      - ./config/canal-config/:/home/admin/canal-server/conf/
-    depends_on:
-      - mysql-server
-      - zookeeper
+  # zookeeper:
+  #   image: wurstmeister/zookeeper:3.4.6
+  #   ports:
+  #     - "2181:2181"
 
   mysql-server:
     image: mysql
