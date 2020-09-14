@@ -17,7 +17,42 @@ docker-compose up -d
 
 在集群启动后，可以通过 localhost:8081 查看 flink dashboard。
 
-2. 通过 Flink SQL Client 编写作业
+2. 注册任务环境
+
+在 MySQL 和 TiDB 中注册好表
+
+```bash
+docker-compose exec mysql-server mysql -uroot
+
+DROP DATABASE IF EXISTS test;
+CREATE DATABASE test; 
+USE test;
+
+create table base (
+  base_id int primary key,
+  base_location varchar(20)
+);
+create table stuff(
+  stuff_id int primary key,
+  stuff_base_id int,
+  stuff_name varchar(20)
+);
+```
+
+```bash
+docker-compose exec mysql-server mysql -htidb -uroot -P4000
+
+use test;
+create table wide_stuff(
+    stuff_id int primary key,
+    base_id int,
+    base_location varchar(20),
+    stuff_name varchar(20)
+);
+```
+
+
+3. 通过 Flink SQL Client 编写作业
 
 ```bash
 docker-compose exec jobmanager ./bin/sql-client.sh embedded -l ./connector-lib
@@ -100,20 +135,6 @@ on stuff.stuff_base_id = base.base_id;
 - 将 wide_stuff 表的修改写入到 tidb 中。
 
 标准输出可以在本目录下执行 `docker-compose logs -f taskmanager` 持续查看。
-
-3. 在目标数据库 TiDB 中创建结果表
-
-```bash
-docker-compose exec mysql-server mysql -htidb -uroot -P4000
-
-use test;
-create table wide_stuff(
-    stuff_id int primary key,
-    base_id int,
-    base_location varchar(20),
-    stuff_name varchar(20)
-);
-```
 
 4. 在 MySQL 中写入数据，进行测试
 

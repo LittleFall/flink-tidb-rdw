@@ -46,8 +46,6 @@ services:
       - 3307:3306
     environment:
       MYSQL_ALLOW_EMPTY_PASSWORD: 'yes'
-    volumes:
-      - ./config/mysql:/docker-entrypoint-initdb.d
     security_opt:
       - seccomp:unconfined
 
