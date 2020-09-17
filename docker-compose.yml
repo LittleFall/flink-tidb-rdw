@@ -38,7 +38,7 @@ services:
   #   ports:
   #     - "2181:2181"
 
-  mysql-server:
+  mysql:
     image: mysql
     command: --default-authentication-plugin=mysql_native_password
     restart: always
@@ -55,6 +55,7 @@ services:
       - "2379"
     volumes:
       - ./config/tidb-config/pd.toml:/pd.toml:ro
+      - ./logs/tidbs:/logs/
     command:
       - --name=pd
       - --client-urls=http://0.0.0.0:2379
@@ -71,6 +72,7 @@ services:
     image: pingcap/tikv:latest
     volumes:
       - ./config/tidb-config/tikv.toml:/tikv.toml:ro
+      - ./logs/tidbs:/logs/
     command:
       - --addr=0.0.0.0:20160
       - --advertise-addr=tikv:20160
@@ -89,11 +91,13 @@ services:
       - "10080:10080"
     volumes:
       - ./config/tidb-config/tidb.toml:/tidb.toml:ro
+      - ./logs/tidbs:/logs/
     command:
       - --store=tikv
       - --path=pd:2379
       - --config=/tidb.toml
       - --log-file=/logs/tidb.log
+      - --log-slow-query=/logs/tidb_slow.log
       - --advertise-address=tidb
     depends_on:
       - "tikv"
