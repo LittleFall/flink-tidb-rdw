@@ -1,4 +1,6 @@
-# A sample of Flink TiDB Realtime Datawarhouse
+# Flink-TiDB-RDW
+
+A sample of Flink TiDB Realtime Datawarhouse.
 
 [Tutorial Slides(In Chinese)](https://docs.google.com/presentation/d/1H3D_D6MKS3vT2-WMhpclG3xzIMA1_jR_fqwJ3KSzxrw/edit)
 
@@ -322,7 +324,7 @@ create table mysql_sink (
 insert into mysql_sink (id, name) select * from data_gen;
 ```
 
-## Stream Stream Join
+## Demo3: Stream Stream Join
 
 In MySQL:
 ```sql
@@ -409,7 +411,7 @@ delete from stuff where name = 'lisi';
 update base set location = 'gz' where location = 'bj';
 ```
 
-## Stream Table Join
+## Demo4: Stream Table Join
 
 Mysql and TiDB command is as same as above.
 
