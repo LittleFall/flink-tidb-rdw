@@ -6,7 +6,7 @@ A sample of Flink TiDB Realtime Datawarhouse.
 
 [Blog(In Chinese)](https://pingcap.com/blog-cn/when-tidb-and-flink-are-combined/)
 
-Blog(In English) Publishing
+[Blog(In English)](https://pingcap.com/blog/flink-+-tidb-a-scale-out-real-time-data-warehouse-for-second-level-analytics/)
 
 Sincerely thanks to [TiDB](https://docs.pingcap.com/zh/tidb/stable) and [Apache Flink](https://flink.apache.org/)
 
