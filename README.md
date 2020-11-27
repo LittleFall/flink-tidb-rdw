@@ -196,7 +196,7 @@ docker-compose exec mysql mysql -htidb -uroot -P4000 -e"select * from test.wide_
 1. It is recommended to adjust the available memory of docker compose to 8G or above.
 2. Flink SQL client is designed for interactive execution. Currently, it does not support multiple statements input at a time. An available alternative is Apache Zeppelin.
 3. If you want to connect to the outside in docker, use `host.docker.internal` as host.
-4. You can use following command to check if Kafka received data.
+4. If you use kafka, you can use following command to check if Kafka received data.
 
 ```bash
 docker-compose exec mysql mysql -uroot -e"insert into test.base values (1, 'bj')";
@@ -260,7 +260,7 @@ create table source (
 );
 
 
-https://github.com/ververica/flink-cdc-connectors/wiki/MySQL-CDC-Connector#connector-options
+# https://github.com/ververica/flink-cdc-connectors/wiki/MySQL-CDC-Connector#connector-options
 
 create table sink (
     id int primary key,
@@ -273,7 +273,7 @@ create table sink (
     'table-name' = 'username', 
     'sink.buffer-flush.max-rows' = '1', 'sink.buffer-flush.interval' = '0'
 );
-https://ci.apache.org/projects/flink/flink-docs-release-1.11/zh/dev/table/connectors/jdbc.html#connector-options
+# https://ci.apache.org/projects/flink/flink-docs-release-1.11/zh/dev/table/connectors/jdbc.html#connector-options
 
 insert into sink select * from source;
 ```
