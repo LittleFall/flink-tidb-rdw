@@ -2,7 +2,7 @@
 
 A sample of Flink TiDB Realtime Datawarhouse.
 
-[Tutorial Slides(In Chinese)](https://docs.google.com/presentation/d/1H3D_D6MKS3vT2-WMhpclG3xzIMA1_jR_fqwJ3KSzxrw/edit)
+[Tutorial Slides(In Chinese)](https://www.slidestalk.com/TiDB/FlinkTidbRdw)
 
 [Blog(In Chinese)](https://pingcap.com/blog-cn/when-tidb-and-flink-are-combined/)
 
