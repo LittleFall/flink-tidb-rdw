@@ -390,6 +390,13 @@ insert into wide_stuff
 select s.id, b.id, b.location, s.name
 from stuff s, base b
 where s.base_id = b.id;
+
+SET execution.result-mode=tableau;
+
+insert into wide_stuff
+select s.id, b.id, b.location, s.name
+from stuff s 
+left join base b on s.base_id = b.id;
 ```
 
 
@@ -461,4 +468,59 @@ insert into stuff values (3, 1, 'wangliu');
 update base set location = 'gz' where location = 'bj';
 insert into stuff values (4, 1, 'zhaoliu');
 update stuff set name = 'wangwu' where name = 'wangliu';
+```
+
+## tpcc 测试吞吐量
+
+CREATE TABLE `order_line` (
+  `ol_o_id` int NOT NULL,
+  `ol_d_id` int NOT NULL,
+  `ol_w_id` int NOT NULL,
+  `ol_number` int NOT NULL,
+  `ol_i_id` int NOT NULL,
+  `ol_supply_w_id` int DEFAULT NULL,
+  `ol_delivery_d` datetime DEFAULT NULL,
+  `ol_quantity` int DEFAULT NULL,
+  `ol_amount` decimal(6,2) DEFAULT NULL,
+  `ol_dist_info` char(24) DEFAULT NULL,
+  PRIMARY KEY (`ol_w_id`,`ol_d_id`,`ol_o_id`,`ol_number`)
+);
+
+go-tpc tpcc prepare -H127.0.0.1 -P3306 --dropdata
+```sql
+CREATE TABLE `order_line` (
+  `ol_o_id` int NOT NULL,
+  `ol_d_id` int NOT NULL,
+  `ol_w_id` int NOT NULL,
+  `ol_number` int NOT NULL,
+  `ol_i_id` int NOT NULL,
+  `ol_supply_w_id` int,
+  `ol_delivery_d` timestamp,
+  `ol_quantity` int,
+  `ol_amount` decimal(6,2),
+  `ol_dist_info` char(24),
+  PRIMARY KEY (`ol_w_id`,`ol_d_id`,`ol_o_id`,`ol_number`) NOT ENFORCED
+);
+
+CREATE TABLE `source` (
+    PRIMARY KEY (`ol_w_id`,`ol_d_id`,`ol_o_id`,`ol_number`) NOT ENFORCED
+) WITH (
+    'connector' = 'mysql-cdc',
+    'hostname' = '127.0.0.1', 'port' = '3306',
+    'username' = 'root', 'password' = '',
+    'database-name' = 'test', 'table-name' = 'order_line'
+) LIKE `order_line` (EXCLUDING ALL);
+
+CREATE TABLE `sink` (
+    PRIMARY KEY (`ol_w_id`,`ol_d_id`,`ol_o_id`,`ol_number`) NOT ENFORCED
+) WITH (
+    'connector' = 'mysql-cdc',
+	'connector' = 'jdbc', 'driver' = 'com.mysql.cj.jdbc.Driver',
+    'username' = 'root', 'password' = '',
+    'url' = 'jdbc:mysql:loadbalance://h81:23300,h82:23300,h85:23300/test?rewriteBatchedStatements=true',
+    'table-name' = 'order_line', 
+    'sink.buffer-flush.max-rows' = '10000', 'sink.buffer-flush.interval' = '1'
+) LIKE `order_line` (EXCLUDING ALL);
+
+insert into sink select * from source;
 ```

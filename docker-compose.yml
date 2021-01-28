@@ -6,6 +6,7 @@ services:
     volumes:
       - ./logs/jobmanager/:/opt/flink/log/
       - ./config/flink-jars/:/opt/flink/connector-lib/
+      - ./logs/flink-checkpoints/:/flink-checkpoints
     hostname: "jobmanager"
     expose:
       - "6123"
@@ -13,12 +14,17 @@ services:
       - "8081:8081"
     command: jobmanager
     environment:
-      - JOB_MANAGER_RPC_ADDRESS=jobmanager
-      
+      - |
+        FLINK_PROPERTIES=
+        jobmanager.rpc.address: jobmanager
+        state.backend: rocksdb
+        state.checkpoints.dir: file:///flink-checkpoints
+
   taskmanager:
     image: flink:1.11.1-scala_2.12
     volumes:
       - ./logs/taskmanager/:/opt/flink/log/
+      - ./logs/flink-checkpoints/:/flink-checkpoints
     expose:
       - "6121"
       - "6122"
@@ -32,6 +38,8 @@ services:
         FLINK_PROPERTIES=
         jobmanager.rpc.address: jobmanager
         taskmanager.numberOfTaskSlots: 8
+        state.backend: rocksdb
+        state.checkpoints.dir: file:///flink-checkpoints
 
   # zookeeper:
   #   image: wurstmeister/zookeeper:3.4.6
