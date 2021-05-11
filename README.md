@@ -1,25 +1,33 @@
-# TiDB Flink 实时数仓
+# Flink-TiDB-RDW
 
-## 使用方法
+A sample of Flink TiDB Realtime Datawarhouse.
 
-1. 拉起 docker-compose 集群
+[Tutorial Slides(In Chinese)](https://www.slidestalk.com/TiDB/FlinkTidbRdw)
+
+[Blog(In Chinese)](https://pingcap.com/blog-cn/when-tidb-and-flink-are-combined/)
+
+[Blog(In English)](https://pingcap.com/blog/flink-+-tidb-a-scale-out-real-time-data-warehouse-for-second-level-analytics/)
+
+Sincerely thanks to [TiDB](https://docs.pingcap.com/zh/tidb/stable) and [Apache Flink](https://flink.apache.org/)
+
+## How to use
+
+1. Docker-Compose Up
 
 ```bash
-# 克隆项目
+# Clone Project
 git clone https://github.com/LittleFall/flink-tidb-rdw && cd ./flink-tidb-rdw/
 
-# 重置环境
+# Reset Env
 docker-compose down -v; rm -rf logs
 
-# 启动集群
+# Startup
 docker-compose up -d
 ```
 
-在集群启动后，可以通过 localhost:8081 查看 flink dashboard。
+You can use flink dashboard in [localhost:8081](localhost:8081).
 
-2. 注册任务环境
-
-在 MySQL 和 TiDB 中注册好表
+2. Create Table in MySQL and TiDB.
 
 ```bash
 docker-compose exec mysql mysql -uroot
@@ -52,13 +60,13 @@ create table wide_stuff(
 ```
 
 
-3. 通过 Flink SQL Client 编写作业
+3. Submit Task in Flink SQL Client.
 
 ```bash
 docker-compose exec jobmanager ./bin/sql-client.sh embedded -l ./connector-lib
 ```
 
-注册 Flink 表
+create Flink table
 
 ```sql
 create table base (
@@ -110,7 +118,7 @@ create table print_stuff WITH ('connector' = 'print') LIKE stuff (EXCLUDING ALL)
 create table print_wide_stuff WITH ('connector' = 'print') LIKE wide_stuff (EXCLUDING ALL);
 ```
 
-提交作业到 Flink 集群
+submit task to Flink Server
 
 ```sql
 insert into wide_stuff
@@ -128,15 +136,15 @@ from stuff inner join base
 on stuff.stuff_base_id = base.base_id;
 ```
 
-此时可以在 localhost:8081 看到一共注册了 4 个任务，分别是：
-- 将 mysql 中 base 表的修改打印在标准输出中。
-- 将 mysql 中 stuff 表的修改打印标准输出中。
-- 将 base 表和 stuff 表 join 成 wide_stuff 表，将 wide_stuff 表的修改打印在标准输出中。
-- 将 wide_stuff 表的修改写入到 tidb 中。
+Then you can see four tasks in localhost:8081, they are:
+- Print the changelog of `base` table in MySQL to standard output.
+- Print the changelog of `stuff` table in MySQL to standard output.
+- Join `base` and `stuff` to `wide_stuff`, Print the changelog of `wide_stuff` table to standard output.
+- Wrint the changelog of `wide_stuff` table to TiDB.
 
-标准输出可以在本目录下执行 `docker-compose logs -f taskmanager` 持续查看。
+You can use `docker-compose logs -f taskmanager` to see standard output.
 
-4. 在 MySQL 中写入数据，进行测试
+4. Write data to MySQL for testing.
 
 ```bash
 docker-compose exec mysql mysql -uroot
@@ -151,7 +159,7 @@ update stuff set stuff_name = 'wangwu' where stuff_id = 3;
 delete from stuff where stuff_name = 'lisi';
 ```
 
-此时可以在标准输出中看到对应的变化：
+See result in standard output:
 
 ```bash
 taskmanager_1   | +I(1,bj)
@@ -170,7 +178,7 @@ taskmanager_1   | -D(2,1,lisi)
 taskmanager_1   | -D(2,1,bj,lisi)
 ```
 
-也可以在 TiDB 中查看结果：
+See result in TiDB:
 
 ```bash
 docker-compose exec mysql mysql -htidb -uroot -P4000 -e"select * from test.wide_stuff";
@@ -183,12 +191,12 @@ docker-compose exec mysql mysql -htidb -uroot -P4000 -e"select * from test.wide_
 +----------+---------+---------------+------------+
 ```
 
-## 注意点
+## Note
 
-1. Flink 需要内存较大，请将 docker-compose 集群可用的内存调大，建议 6G 及以上。
-2. Flink SQL Client 设计为交互式执行，目前不支持一次输入多条语句，一个可用的替代方案是 apache zeppelin。
-3. 可以使用如下命令测试 Kafka 是否接收到了数据
-4. 如果要在 docker 内连接外部，host 请使用 host.docker.internal
+1. It is recommended to adjust the available memory of docker compose to 8G or above.
+2. Flink SQL client is designed for interactive execution. Currently, it does not support multiple statements input at a time. An available alternative is Apache Zeppelin.
+3. If you want to connect to the outside in docker, use `host.docker.internal` as host.
+4. If you use kafka, you can use following command to check if Kafka received data.
 
 ```bash
 docker-compose exec mysql mysql -uroot -e"insert into test.base values (1, 'bj')";
@@ -197,9 +205,6 @@ docker-compose exec kafka /opt/kafka/bin/kafka-console-consumer.sh --bootstrap-s
 
 docker-compose down -v && rm -rf ./logs && find ./config/canal-config -name "meta.dat"|xargs rm -f && docker-compose up -d
 ```
-
-TODO: 增加一些例子，比如 mysql 中异步读取维表、使用 flink 进行数据异构。
-
 
 ## Demo1: Datagen to Print
 
@@ -217,7 +222,7 @@ docker-compose exec mysql mysql -uroot -htidb -P4000 # tidb
 docker-compose exec jobmanager ./bin/sql-client.sh embedded -l ./connector-lib
 ```
 
-在 mysql 中执行
+In MySQL
 ```sql
 create database if not exists test; use test;
 drop table if exists username;
@@ -228,7 +233,7 @@ create table username (
 );
 ```
 
-在 tidb 中执行
+In TiDB
 ```sql
 create database if not exists test; use test;
 drop table if exists username;
@@ -240,7 +245,7 @@ create table username (
 );
 ```
 
-flink sql 中执行
+In Flink sql
 
 ```sql
 create table source (
@@ -255,7 +260,7 @@ create table source (
 );
 
 
-https://github.com/ververica/flink-cdc-connectors/wiki/MySQL-CDC-Connector#connector-options
+# https://github.com/ververica/flink-cdc-connectors/wiki/MySQL-CDC-Connector#connector-options
 
 create table sink (
     id int primary key,
@@ -268,29 +273,29 @@ create table sink (
     'table-name' = 'username', 
     'sink.buffer-flush.max-rows' = '1', 'sink.buffer-flush.interval' = '0'
 );
-https://ci.apache.org/projects/flink/flink-docs-release-1.11/zh/dev/table/connectors/jdbc.html#connector-options
+# https://ci.apache.org/projects/flink/flink-docs-release-1.11/zh/dev/table/connectors/jdbc.html#connector-options
 
 insert into sink select * from source;
 ```
 
-可以通过 TiDB 的日志来查看实际在 TiDB 中执行的语句。
+You can use TiDB log to check the statements actually executed in TiDB.
 
 ```sql
--- 设置 tidb 的慢日志记录时限
+-- Set TiDB slowlog threshold to see actually statements executed in TiDB.
 set tidb_slow_log_threshold = 0;
 
--- 在 mysql 中执行语句
+-- Statements in MySQL
 insert into `username`(`id`, `name`) values (1, 'a'), (2, 'b'), (3, 'c');
 update username set name='d' where id=2; select * from username;
 delete from username where id=1; select * from username;
 
--- 在 tidb 中实际执行的语句
+-- Statements actually executed in TiDB
 INSERT INTO `username`
 (`id`, `name`, `mysql_create_time`) VALUES (1, 'a', '2020-09-14 12:44:24.581219') 
 ON DUPLICATE KEY UPDATE `id`=VALUES(`id`), `name`=VALUES(`name`), `mysql_create_time`=VALUES(`mysql_create_time`);
 
 
-INSERT INTO `username`(`id`, `name`) VALUES (1, 'c')  ON DUPLICATE KEY UPDATE `id`=VALUES(`id`), `name`=VALUES(`name`); -- 攒批
+INSERT INTO `username`(`id`, `name`) VALUES (1, 'c')  ON DUPLICATE KEY UPDATE `id`=VALUES(`id`), `name`=VALUES(`name`); -- batch execute
 DELETE FROM `username` WHERE `id`=1;
 ```
 ## datagen to mysql
@@ -319,9 +324,9 @@ create table mysql_sink (
 insert into mysql_sink (id, name) select * from data_gen;
 ```
 
-## 双流 join
+## Demo3: Stream Stream Join
 
-MySQL 中执行
+In MySQL:
 ```sql
 create database if not exists test; use test;
 drop table if exists base;
@@ -337,7 +342,7 @@ create table stuff(
 );
 ```
 
-TiDB 中执行
+In TiDB:
 ```sql
 create database if not exists test; use test;
 
@@ -349,7 +354,7 @@ create table wide_stuff(
 );
 ```
 
-Flink 任务
+In Flink SQL Client:
 ```sql
 create table base (
     id int primary key,
@@ -400,7 +405,7 @@ left join base b on s.base_id = b.id;
 ```
 
 
-测试
+Test
 
 ```sql
 insert into base values (1, 'bj');
@@ -413,7 +418,9 @@ delete from stuff where name = 'lisi';
 update base set location = 'gz' where location = 'bj';
 ```
 
-## 维表 Join
+## Demo4: Stream Table Join
+
+Mysql and TiDB command is as same as above.
 
 flink sql
 ```sql
@@ -458,7 +465,7 @@ from stuff as s
 join base FOR SYSTEM_TIME AS OF s.proc_time  b on s.base_id = b.id;
 ```
 
-测试
+Test
 
 ```sql
 insert into stuff values (1, 1, 'zhangsan');
